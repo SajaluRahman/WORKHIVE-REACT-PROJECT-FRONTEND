@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import axios from 'axios';
 import { Navigation, Pagination } from 'swiper/modules';
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
 import "../../App.css";
 import { Swiper, SwiperSlide } from "swiper/react";
+import { getSinglePost } from '../../api/api'; // Import the API function
 
 function InfoAboutJobs() {
   const { id } = useParams();
@@ -15,9 +15,9 @@ function InfoAboutJobs() {
   useEffect(() => {
     const fetchPost = async () => {
       try {
-        const res = await axios.get(`https://workhive-project-backend-6.onrender.com/api/post/single-post/${id}`);
-        if (res.data && res.data.post) {
-          setPost(res.data.post);
+        const data = await getSinglePost(id);
+        if (data && data.post) {
+          setPost(data.post);
         } else {
           console.error('Post not found');
         }

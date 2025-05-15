@@ -2,112 +2,85 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-
+import { addPost } from '../../api/api'; // Import the API function
 
 function AddingPost() {
-    const {
-      register,
-      handleSubmit,
-      formState: { errors },
-    } = useForm({
-      mode: 'onSubmit', // Validate on submit
-      reValidateMode: 'onChange', // Re-validate on change
-    });
-  
-    const [skills, setSkills] = React.useState([]);
-    const [skillInput, setSkillInput] = React.useState('');
-    const [images, setImages] = React.useState([]);
-    const [successMessage, setSuccessMessage] = React.useState('');
-    
-    const [requirements, setRequirements] = useState([]);
-    const [requirementInput, setRequirementInput] = useState('');
-    const navigate = useNavigate();
-  
-    const handleSkillAdd = () => {
-      const trimmed = skillInput.trim();
-      if (!trimmed) return;
-      if (!skills.includes(trimmed)) {
-        setSkills([...skills, trimmed]);
-      }
-      setSkillInput('');
-    };
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    mode: 'onSubmit',
+    reValidateMode: 'onChange',
+  });
 
-    
-  
-    const removeSkill = (skill) => {
-      setSkills(skills.filter((s) => s !== skill));
-    };
-  
-    const handleImageChange = (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        setImages([...images, file]);
-      }
-      e.target.value = '';
-    };
-  
-    const removeImage = (index) => {
-      const newImages = [...images];
-      newImages.splice(index, 1);
-      setImages(newImages);
-    };
+  const [skills, setSkills] = useState([]);
+  const [skillInput, setSkillInput] = useState('');
+  const [images, setImages] = useState([]);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [requirements, setRequirements] = useState([]);
+  const [requirementInput, setRequirementInput] = useState('');
+  const navigate = useNavigate();
 
-        // Handle adding requirement
-        const handleRequirementAdd = () => {
-            const trimmed = requirementInput.trim();
-            if (!trimmed) return;
-            if (!requirements.includes(trimmed)) {
-              setRequirements([...requirements, trimmed]);
-            }
-            setRequirementInput('');
-          };
-      
-          const removeRequirement = (requirement) => {
-            setRequirements(requirements.filter((r) => r !== requirement));
-          };
-  
-    const handleCloseAdd = () => {
+  const handleSkillAdd = () => {
+    const trimmed = skillInput.trim();
+    if (!trimmed) return;
+    if (!skills.includes(trimmed)) {
+      setSkills([...skills, trimmed]);
+    }
+    setSkillInput('');
+  };
+
+  const removeSkill = (skill) => {
+    setSkills(skills.filter((s) => s !== skill));
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImages([...images, file]);
+    }
+    e.target.value = '';
+  };
+
+  const removeImage = (index) => {
+    const newImages = [...images];
+    newImages.splice(index, 1);
+    setImages(newImages);
+  };
+
+  const handleRequirementAdd = () => {
+    const trimmed = requirementInput.trim();
+    if (!trimmed) return;
+    if (!requirements.includes(trimmed)) {
+      setRequirements([...requirements, trimmed]);
+    }
+    setRequirementInput('');
+  };
+
+  const removeRequirement = (requirement) => {
+    setRequirements(requirements.filter((r) => r !== requirement));
+  };
+
+  const handleCloseAdd = () => {
+    navigate('/clientprofile');
+  };
+
+  const onSubmit = async (data) => {
+    if (skills.length === 0) {
+      alert('Please add at least one skill before submitting.');
+      return;
+    }
+
+    try {
+      await addPost({ ...data, skills, requirements, images });
+      setSuccessMessage('Post created successfully!');
       navigate('/clientprofile');
-    };
-  
-    const onSubmit = async (data) => {
-      if (skills.length === 0) {
-        alert('Please add at least one skill before submitting.');
-        return;
-      }
-  
-      const formData = new FormData();
-      formData.append('title', data.title);
-      formData.append('category', data.category);
-      formData.append('description', data.description);
-      formData.append('description1', data.description1 || '');
-      formData.append('price', data.price);
-      formData.append('pay', data.pay);
-      formData.append('hourlyRate', data.hourlyRate);
-      formData.append('duration', data.duration || '');
-      formData.append('requirements', JSON.stringify(requirements));
-      formData.append('qualifications', data.qualifications || '');
-      formData.append('paymentStructure', data.paymentStructure || '');
-      formData.append('bonus', data.bonus || '');
-      formData.append('paymentMethod', data.paymentMethod || '');
-      formData.append('paymentFrequency', data.paymentFrequency || '');
-      formData.append('paymentStructure', data.paymentStructure || '');
-      formData.append('skillsNeeded', JSON.stringify(skills));
-      images.forEach((img) => formData.append('images', img));
-  
-      try {
-        const response = await axios.post('https://workhive-project-backend-6.onrender.com/api/post/add-post', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        });
-        setSuccessMessage('Post created successfully!');
-        navigate('/clientprofile'); // Redirect after success
-      } catch (err) {
-        alert(`Error uploading post: ${err.response?.data?.error || err.message}`);
-      }
-    };
-  
+    } catch (err) {
+      alert(`Error uploading post: ${err}`);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
@@ -138,45 +111,37 @@ function AddingPost() {
           <div>
             <label className="block text-sm font-medium mb-1">Title</label>
             <input
-            id='title'
-            onChange={(e) => setTitle(e.target.value)}
-  {...register('title', { required: 'Title is required' })}
-  className="w-full p-2 border border-gray-300 rounded-md"
-  placeholder="Enter title"
-/>
-{errors.title && <p className="text-red-500 text-sm mt-1">{errors.title.message}</p>}
+              {...register('title', { required: 'Title is required' })}
+              className="w-full p-2 border border-gray-300 rounded-md"
+              placeholder="Enter title"
+            />
+            {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title.message}</p>}
           </div>
 
           <div>
             <label className="block text-sm font-medium mb-1">Category</label>
             <input
-            id='category'
-            onChange={(e) => setCategory(e.target.value)}
-              {...register('category', { required: true })}
+              {...register('category', { required: 'Category is required' })}
               className="w-full p-2 border border-gray-300 rounded-md"
               placeholder="Enter category"
             />
-            {errors.category && <p className="text-red-500 text-sm mt-1">Category is required</p>}
+            {errors.category && <p className="text-red-500 text-sm mt-1">{errors.category.message}</p>}
           </div>
 
           <div className="md:col-span-2">
             <label className="block text-sm font-medium mb-1">Description</label>
             <textarea
-                id='description'
-                onChange={(e) => setDescription(e.target.value)}
-              {...register('description', { required: true })}
+              {...register('description', { required: 'Description is required' })}
               rows="3"
               className="w-full p-2 border border-gray-300 rounded-md"
               placeholder="Enter description"
             />
-            {errors.description && <p className="text-red-500 text-sm mt-1">Description is required</p>}
+            {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description.message}</p>}
           </div>
 
           <div className="md:col-span-2">
             <label className="block text-sm font-medium mb-1">Additional Description</label>
             <textarea
-                id='description1'
-                onChange={(e) => setDescription1(e.target.value)}
               {...register('description1')}
               rows="3"
               className="w-full p-2 border border-gray-300 rounded-md"
@@ -188,33 +153,28 @@ function AddingPost() {
             <label className="block text-sm font-medium mb-1">Price</label>
             <input
               type="number"
-                id='price'
-                onChange={(e) => setPrice(e.target.value)}
-              {...register('price', { required: true })}
+              {...register('price', { required: 'Price is required' })}
               className="w-full p-2 border border-gray-300 rounded-md"
               placeholder="Enter price"
             />
-            {errors.price && <p className="text-red-500 text-sm mt-1">Price is required</p>}
+            {errors.price && <p className="text-red-500 text-sm mt-1">{errors.price.message}</p>}
           </div>
 
           <div>
             <label className="block text-sm font-medium mb-1">Pay</label>
             <input
-                type="text"
-                id='pay'
-                onChange={(e) => setPay(e.target.value)}
-              {...register('pay', { required: true })}
+              type="text"
+              {...register('pay', { required: 'Pay is required' })}
               className="w-full p-2 border border-gray-300 rounded-md"
               placeholder="Enter pay"
             />
-            {errors.pay && <p className="text-red-500 text-sm mt-1">Pay is required</p>}
+            {errors.pay && <p className="text-red-500 text-sm mt-1">{errors.pay.message}</p>}
           </div>
 
           <div>
             <label className="block text-sm font-medium mb-1">Hourly Rate</label>
             <input
               type="number"
-                id='hourlyRate'
               {...register('hourlyRate')}
               className="w-full p-2 border border-gray-300 rounded-md"
               placeholder="Enter hourly rate"
@@ -224,66 +184,61 @@ function AddingPost() {
           <div>
             <label className="block text-sm font-medium mb-1">Duration</label>
             <input
-                type="text"
-                id='duration'
-                onChange={(e) => setDuration(e.target.value)}
+              type="text"
               {...register('duration')}
               className="w-full p-2 border border-gray-300 rounded-md"
               placeholder="Enter duration"
             />
           </div>
 
-         {/* Requirements */}
-         <div className="md:col-span-2">
-              <label className="block text-sm font-medium mb-1">Requirements</label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={requirementInput}
-                  onChange={(e) => setRequirementInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleRequirementAdd();
-                    }
-                  }}
-                  className="flex-grow p-2 border border-gray-300 rounded-md"
-                  placeholder="Type requirement and press Enter"
-                />
-                <button
-                  type="button"
-                  onClick={handleRequirementAdd}
-                  className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-sm"
-                >
-                  Add
-                </button>
-              </div>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {requirements.map((requirement, index) => (
-                  <span
-                    key={index}
-                    className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm flex items-center"
-                  >
-                    {requirement}
-                    <button
-                      type="button"
-                      onClick={() => removeRequirement(requirement)}
-                      className="ml-2 text-red-500 hover:text-red-700"
-                    >
-                      <FontAwesomeIcon icon={faTimes} />
-                    </button>
-                  </span>
-                ))}
-              </div>
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium mb-1">Requirements</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={requirementInput}
+                onChange={(e) => setRequirementInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleRequirementAdd();
+                  }
+                }}
+                className="flex-grow p-2 border border-gray-300 rounded-md"
+                placeholder="Type requirement and press Enter"
+              />
+              <button
+                type="button"
+                onClick={handleRequirementAdd}
+                className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-sm"
+              >
+                Add
+              </button>
             </div>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {requirements.map((requirement, index) => (
+                <span
+                  key={index}
+                  className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm flex items-center"
+                >
+                  {requirement}
+                  <button
+                    type="button"
+                    onClick={() => removeRequirement(requirement)}
+                    className="ml-2 text-red-500 hover:text-red-700"
+                  >
+                    <FontAwesomeIcon icon={faTimes} />
+                  </button>
+                </span>
+              ))}
+            </div>
+          </div>
 
           <div className="md:col-span-2">
             <label className="block text-sm font-medium mb-1">Skills Needed</label>
             <div className="flex gap-2">
               <input
                 type="text"
-                id='skillInput'
-                
                 value={skillInput}
                 onChange={(e) => setSkillInput(e.target.value)}
                 onKeyDown={(e) => {
@@ -326,8 +281,6 @@ function AddingPost() {
             <label className="block text-sm font-medium mb-1">Add Image</label>
             <input
               type="file"
-              id='images'
-
               accept="image/*"
               onChange={handleImageChange}
               className="w-full p-2 border border-gray-300 rounded-md"
@@ -357,10 +310,8 @@ function AddingPost() {
           <div>
             <label className="block text-sm font-medium mb-1">Qualifications</label>
             <input
+              type="text"
               {...register('qualifications')}
-                type="text"
-                    id='qualifications'
-                    onChange={(e) => setQualifications(e.target.value)}
               className="w-full p-2 border border-gray-300 rounded-md"
               placeholder="Enter qualifications"
             />
@@ -369,9 +320,7 @@ function AddingPost() {
           <div>
             <label className="block text-sm font-medium mb-1">Bonus</label>
             <input
-                type="text"
-                id='bonus'
-                onChange={(e) => setBonus(e.target.value)}
+              type="text"
               {...register('bonus')}
               className="w-full p-2 border border-gray-300 rounded-md"
               placeholder="Enter bonus"
@@ -381,9 +330,7 @@ function AddingPost() {
           <div>
             <label className="block text-sm font-medium mb-1">Payment Method</label>
             <input
-                type="text"
-                id='paymentMethod'
-                onChange={(e) => setPaymentMethod(e.target.value)}
+              type="text"
               {...register('paymentMethod')}
               className="w-full p-2 border border-gray-300 rounded-md"
               placeholder="Enter payment method"
@@ -393,22 +340,20 @@ function AddingPost() {
           <div>
             <label className="block text-sm font-medium mb-1">Payment Frequency</label>
             <input
-                type="text"
-                id='paymentFrequency'
-                onChange={(e) => setPaymentFrequency(e.target.value)}
+              type="text"
               {...register('paymentFrequency')}
               className="w-full p-2 border border-gray-300 rounded-md"
               placeholder="Enter payment frequency"
             />
-          </div> <div>
+          </div>
+
+          <div>
             <label className="block text-sm font-medium mb-1">Payment Structure</label>
             <input
-                type="text"
-                id='paymentStructure'
-                onChange={(e) => setPaymentStructure(e.target.value)}
+              type="text"
               {...register('paymentStructure')}
               className="w-full p-2 border border-gray-300 rounded-md"
-              placeholder="Enter payment Structure"
+              placeholder="Enter payment structure"
             />
           </div>
 

@@ -37,7 +37,7 @@ const SignUp = () => {
     };
     try {
       const response = await axios.post(
-        "https://workhive-project-backend-6.onrender.com/api/user/register",
+        "http://localhost:4004/api/user/register",
         finalData,
         {
           headers: { "Content-Type": "application/json" },

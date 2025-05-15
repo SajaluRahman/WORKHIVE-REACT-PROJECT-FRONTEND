@@ -6,7 +6,7 @@ import { Navbar3 } from "../../Components/Common/CommonComponents/Navbar";
 import { Sidebar2 } from "../../Components/FreelancerComponents/Sidebar";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import { uploadProfilePhoto, getAllPosts, deletePost } from '../../api/api'; // Import API functions
 
 function ClientProfile() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -55,15 +55,9 @@ function ClientProfile() {
 
       // If there's a new image, upload it
       if (profileImage) {
-        const formDataObj = new FormData();
-        formDataObj.append("profilePhoto", profileImage);
-
-        const res = await axios.post("https://workhive-project-backend-6.onrender.com/api/clientprofile/upload-profilePhoto", formDataObj, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
-
-        if (res.data.imageUrl) {
-          setPreviewImage(res.data.imageUrl); // Update preview with uploaded image URL
+        const res = await uploadProfilePhoto(profileImage);
+        if (res.imageUrl) {
+          setPreviewImage(res.imageUrl); // Update preview with uploaded image URL
         }
       }
     } catch (err) {
@@ -73,9 +67,9 @@ function ClientProfile() {
 
   const fetchPosts = async () => {
     try {
-      const res = await axios.get("https://workhive-project-backend-6.onrender.com/api/post/all-posts");
-      if (res.data && res.data.posts) {
-        setPosts(res.data.posts);
+      const res = await getAllPosts();
+      if (res && res.posts) {
+        setPosts(res.posts);
       }
     } catch (err) {
       console.error("Failed to fetch posts", err);
@@ -99,7 +93,7 @@ function ClientProfile() {
 
   const handleDelete = async (postId) => {
     try {
-      await axios.delete(`https://workhive-project-backend-6.onrender.com/api/post/delete-post/${postId}`);
+      await deletePost(postId);
       setPosts((prevPosts) => prevPosts.filter((post) => post._id !== postId));
       setActiveDropdown(null);
     } catch (err) {
@@ -174,14 +168,14 @@ function ClientProfile() {
         </div>
 
         {/* Posts Grid */}
-        <div className="flex-1 p- md:px-40 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6  mt-10 max-h-[80vh] no-scrollbar overflow-scroll">
+        <div className="flex-1 p- md:px-40 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-10 max-h-[80vh] no-scrollbar overflow-scroll">
           {posts.length > 0 ? (
             posts.map((post) => (
               <div key={post._id} className="bg-white cursor-pointer hover:scale-105 transition-all hover:shadow-xl ease-in-out shadow-md rounded-lg overflow-hidden p-3">
                 <img
-                  src={post.images && post.images.length ? `https://workhive-project-backend-6.onrender.com/uploads/${post.images[0]}` : "/fallback.jpg"}
+                  src={post.images && post.images.length ? `http://localhost:4004/uploads/${post.images[0]}` : "/fallback.jpg"}
                   alt="Post"
-                  className="w-full h-80 sm:h-48 object-cover  rounded-md"
+                  className="w-full h-80 sm:h-48 object-cover rounded-md"
                 />
 
                 <div className="p-3 flex flex-col flex-grow justify-between">
@@ -205,7 +199,7 @@ function ClientProfile() {
                           onClick={() => setActiveDropdown(post._id)}
                           className="text-gray-600 hover:text-gray-900 focus:outline-none"
                         >
-                          &#8942;
+                          ⋮
                         </button>
 
                         {activeDropdown === post._id && (
